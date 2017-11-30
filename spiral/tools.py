@@ -59,9 +59,9 @@ def make_fir_filter(lo, hi, sf):
     The function loads in a "host" file, 's1023.ir', which needs to be in the current folder.
 
     Arguments:
-        - lo (): Lower limit of the band
-        - hi (): Higher limit of the band
-        - sf (): Sampling frequency ()
+        - lo (float): Lower limit of the band (Hz)
+        - hi (float): Higher limit of the band (Hz)
+        - sf (float): Sampling frequency (Hz)
 
     Returns:
         - out (np.array)
@@ -70,11 +70,11 @@ def make_fir_filter(lo, hi, sf):
     nyquist = sf / 2
     host_file = os.path.join(os.path.dirname(__file__), 's1023.ir')
     host = np.fromfile(host_file, dtype='float32')
-    specs = np.zeros(1, int(lo / nyquist * nspecs))
-    np.ones(1, int(hi / nyquist * nspecs - len(specs)))
-    np.zeros(1, nspecs - len(specs))
+    specs = np.zeros((1, int(lo / nyquist * nspecs)))
+    np.ones((1, int(hi / nyquist * nspecs - len(specs))))
+    np.zeros((1, nspecs - len(specs)))
     band_lo = 0
-    win = np.zeros(1, 256)
+    win = np.zeros((1, 256))
     for i in range(1000):
         band_hi = np.pi * (i + 1) / nspecs
         for j in range(256):
