@@ -1,2 +1,2 @@
-# spiral
-Spiral Python implementation
+# spyral
+An implementation of the Spiral vocoder in Python
