@@ -2,7 +2,7 @@
 
 # spyral
 
-An implementation of the Spiral vocoder in Python
+A Python implementation of the Spiral vocoder
 
 Read a paper on Spiral here: https://doi.org/10.1121/1.5009602
 
