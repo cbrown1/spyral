@@ -28,3 +28,15 @@ n_carriers = 80
 spread = -8
 vocoded = spyral(input, fs, n_electrodes, n_carriers, spread)
 ```
+
+## Authors
+
+- **Jacques Grange** - Original spiral matlab code
+
+- **Christopher Brown**
+
+- **Kutay Sezginel**
+
+## License
+
+This project is licensed under the GPLv3 - see the [LICENSE.md](LICENSE.md) file for details.
