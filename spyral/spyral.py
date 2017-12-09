@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 import numpy as np
-import scipy.signal
 from .tools import generate_cfs, generate_bands, make_fir_filter
 
 def spyral(input, fs, n_electrodes, n_carriers, spread, **kwargs):
