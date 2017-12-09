@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/cbrown1/spyral.svg?branch=master)](https://travis-ci.org/cbrown1/spyral)
+
 # spyral
 
 An implementation of the Spiral vocoder in Python
