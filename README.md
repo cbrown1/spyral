@@ -31,7 +31,13 @@ vocoded = spyral(input, fs, n_electrodes, n_carriers, spread)
 
 ## Authors
 
-- **Jacques Grange** - Original spiral matlab code
+### Original spiral matlab code
+
+- **Jacques Grange**
+
+- **John Culling**
+
+### Python port
 
 - **Christopher Brown**
 
