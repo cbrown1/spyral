@@ -3,7 +3,7 @@
 import numpy as np
 from .tools import generate_cfs, generate_bands, make_fir_filter
 
-def spyral(input, fs, n_electrodes, n_carriers, spread, **kwargs):
+def spyral(input, fs, electrodes, n_carriers, spread, **kwargs):
     """Spyral: vocoder that utilizes multiple sinusoidal carriers to simulate current spread
 
         Parameters
@@ -12,8 +12,15 @@ def spyral(input, fs, n_electrodes, n_carriers, spread, **kwargs):
             The input signal
         fs : scalar
             The sampling frequency
-        n_electrodes : scalar
-            Number of electrodes
+        electrodes : scalar or array
+            If type==scalar, it represents the number of electrodes and each electrode will be 
+            linearely distributed on an ERB scale between analysis_lo and analysis_hi.
+
+            If type==array, each element represents the corresponding best frequency of each 
+            electrode, and the number of electrodes is inferred from its length. Among other 
+            things, this can be used to simulate warping, in which the cfs of analysis bands 
+            may be different than the electrode positions.
+
         n_carriers : scalar
             Number of tone carriers
         spread : scalar
@@ -40,7 +47,7 @@ def spyral(input, fs, n_electrodes, n_carriers, spread, **kwargs):
 
         Example
         -------
-        >>> out = spyral(signal, 20, 80, -8, 44100)
+        >>> out = spyral(signal, 44100, 20, 80, -8)
 
     """
     analysis_lo = kwargs.get('analysis_lo', 120) 
@@ -52,24 +59,30 @@ def spyral(input, fs, n_electrodes, n_carriers, spread, **kwargs):
 
     rms_in = np.sqrt(np.mean(np.power(input, 2)))
     lp_filter = make_fir_filter(0, filt_env, fs)       # generate low-pass filter,  default 50Hz
-    cfs = generate_cfs(analysis_lo, analysis_hi, n_electrodes)     # electrodes' centre frequencies
+    if np.isscalar(electrodes):
+        cfs = np.array(generate_cfs(analysis_lo, analysis_hi, electrodes))     # electrodes' centre frequencies
+    else:
+        cfs = np.array(electrodes) # If not scalar, assume a list of cfs
     carrier_fs = generate_cfs(carrier_lo, carrier_hi, n_carriers) # tone carrier frequencies
     t = np.arange(0, len(input) / fs, 1 / fs)
     t_carrier = np.zeros((n_carriers, len(input)))
-    ip_bands = np.array(generate_bands(analysis_lo, analysis_hi, n_electrodes)) # lower/upper limits of each analysis band
-    ip_bank = np.zeros((n_electrodes, 512))
-    envelope = np.zeros((n_electrodes, len(input)))       # envelopes extracted per electrode
+    ip_bands = np.array(generate_bands(analysis_lo, analysis_hi, cfs.size)) # lower/upper limits of each analysis band
+    ip_bank = np.zeros((cfs.size, 512))
+    envelope = np.zeros((cfs.size, len(input)))       # envelopes extracted per electrode
     mixed_envelope = np.zeros((n_carriers, len(input)))   # mixed envelopes to modulate carriers
 
+    print("electrode freqs: {}".format(cfs))
+    print("analysis  cfs: {}".format(ip_bands))
+
     # Envelope extraction
-    for j in range(n_electrodes):
+    for j in range(cfs.size):
         ip_bank[j, :] = make_fir_filter(ip_bands[j, 0], ip_bands[j, 1], fs)   # analysis filterbank
         speechband = np.convolve(input, ip_bank[j, :], mode='same')
         envelope[j, :] = np.convolve(np.maximum(speechband,0), lp_filter, mode='same') # low-pass filter envelope
 
     # weights applied to power envelopes
     for i in range(n_carriers):
-        for j in range(n_electrodes):
+        for j in range(cfs.size):
             mixed_envelope[i, :] += 10. ** (spread / 10. * np.abs(np.log2(cfs[j] / carrier_fs[i]))) * envelope[j, :] ** 2.
 
     # sqrt to get back to amplitudes
