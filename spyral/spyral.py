@@ -32,13 +32,13 @@ def spyral(input, fs, electrodes, n_carriers, spread, **kwargs):
         analysis_lo : scalar 
             Lower bound of analysis filters, in Hz [default = 120 (Friesen et al.,2001)]
         analysis_hi : scalar 
-            Upper bound of analysis filters, in Hz
+            Upper bound of analysis filters, in Hz [default = 8658]
         carrier_lo : scalar 
-            Lower bound of carriers, in Hz
+            Lower bound of carriers, in Hz [default = 20]
         carrier_hi : scalar 
-            Higher bound of carriers, in Hz
+            Higher bound of carriers, in Hz [default = 20,000]
         filt_env : scalar 
-            Envelope filter cutoff, in Hz
+            Envelope filter cutoff, in Hz [default = 50]
 
         Returns
         -------
@@ -71,9 +71,6 @@ def spyral(input, fs, electrodes, n_carriers, spread, **kwargs):
     envelope = np.zeros((cfs.size, len(input)))       # envelopes extracted per electrode
     mixed_envelope = np.zeros((n_carriers, len(input)))   # mixed envelopes to modulate carriers
 
-    print("electrode freqs: {}".format(cfs))
-    print("analysis  cfs: {}".format(ip_bands))
-
     # Envelope extraction
     for j in range(cfs.size):
         ip_bank[j, :] = make_fir_filter(ip_bands[j, 0], ip_bands[j, 1], fs)   # analysis filterbank
@@ -93,5 +90,5 @@ def spyral(input, fs, electrodes, n_carriers, spread, **kwargs):
     for i in range(n_carriers):
         t_carrier[i, :] = np.sin(2 * np.pi * (carrier_fs[i] * t + np.random.rand()))
         out += mixed_envelope[i, :] * t_carrier[i, :]             # modulate carriers with mixed envelopes
-    out = out * 0.05 * np.sqrt(len(out)) / np.linalg.norm(out)    # rms scaled, to avoid saturation
-    return out
+#    out = out * 0.05 * np.sqrt(len(out)) / np.linalg.norm(out)    # rms scaled, to avoid saturation
+    return out * (np.sqrt(np.mean(np.square(input))) / np.sqrt(np.mean(np.square(out))))

@@ -112,7 +112,7 @@ def generate_bands(lo, hi, n_bands):
     """
     density = n_bands / (hz2erb(hi) - hz2erb(lo))
     bands = []
-    for i in range(1, n_bands + 1):
+    for i in np.arange(1, n_bands + 1):
         bands.append([erb2hz(hz2erb(lo) + (i - 1) / density), erb2hz(hz2erb(lo) + i / density)])
     return bands
 
@@ -126,7 +126,7 @@ def generate_cfs(lo, hi, n_bands):
     """
     density = n_bands / (hz2erb(hi) - hz2erb(lo))
     bands = []
-    for i in range(1, n_bands + 1):
+    for i in np.arange(1, n_bands + 1):
         bands.append(erb2hz(hz2erb(lo) + (i - 0.5) / density))
     return bands
 
