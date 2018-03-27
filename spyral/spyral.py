@@ -37,6 +37,9 @@ def spyral(input, fs, electrodes, n_carriers, spread, **kwargs):
             Lower bound of carriers, in Hz [default = 20]
         carrier_hi : scalar 
             Higher bound of carriers, in Hz [default = 20,000]
+        analysis_cutoffs : array
+            An array of cutoff frequencies to use. analysis_hi and lo are ignored. Must
+            be one more than the number of electrodes.
         filt_env : scalar 
             Envelope filter cutoff, in Hz [default = 50]
 
@@ -51,10 +54,12 @@ def spyral(input, fs, electrodes, n_carriers, spread, **kwargs):
 
     """
     analysis_lo = kwargs.get('analysis_lo', 120) 
-    analysis_hi = kwargs.get('analysis_hi', 8658) 
+    analysis_hi = kwargs.get('analysis_hi', 8658)
+    analysis_cutoffs = kwargs.get('analysis_cutoffs', None)
     carrier_lo = kwargs.get('carrier_lo', 20) 
     carrier_hi = kwargs.get('carrier_hi', 20000) 
     filt_env = kwargs.get('filt_env', 50)
+    in_phase = kwargs.get('in_phase', False)
     fs = np.float32(fs)
 
     rms_in = np.sqrt(np.mean(np.power(input, 2)))
@@ -66,7 +71,10 @@ def spyral(input, fs, electrodes, n_carriers, spread, **kwargs):
     carrier_fs = generate_cfs(carrier_lo, carrier_hi, n_carriers) # tone carrier frequencies
     t = np.arange(0, len(input) / fs, 1 / fs)
     t_carrier = np.zeros((n_carriers, len(input)))
-    ip_bands = np.array(generate_bands(analysis_lo, analysis_hi, cfs.size)) # lower/upper limits of each analysis band
+    if analysis_cutoffs is None:
+        ip_bands = analysis_cutoffs # User specified cutoffs
+    else:
+        ip_bands = np.array(generate_bands(analysis_lo, analysis_hi, cfs.size)) # lower/upper limits of each analysis band
     ip_bank = np.zeros((cfs.size, 512))
     envelope = np.zeros((cfs.size, len(input)))       # envelopes extracted per electrode
     mixed_envelope = np.zeros((n_carriers, len(input)))   # mixed envelopes to modulate carriers
@@ -86,9 +94,16 @@ def spyral(input, fs, electrodes, n_carriers, spread, **kwargs):
     mixed_envelope = np.sqrt(mixed_envelope)
     out = np.zeros(len(input))
 
+    if in_phase:
+        phases = np.zeros(n_carriers)
+    else:
+        phases = np.random.rand(n_carriers) * 2 * np.pi
+
     # Generate carriers, modulate; randomise tone phases (particularly important for binaural!)
     for i in range(n_carriers):
-        t_carrier[i, :] = np.sin(2 * np.pi * (carrier_fs[i] * t + np.random.rand()))
+#        t_carrier[i, :] = np.sin(2 * np.pi * (carrier_fs[i] * t + np.random.rand()))
+        t_carrier[i, :] = np.sin(phases[i] + (2. * np.pi * carrier_fs[i] * t))
+
         out += mixed_envelope[i, :] * t_carrier[i, :]             # modulate carriers with mixed envelopes
 #    out = out * 0.05 * np.sqrt(len(out)) / np.linalg.norm(out)    # rms scaled, to avoid saturation
     return out * (np.sqrt(np.mean(np.square(input))) / np.sqrt(np.mean(np.square(out))))
